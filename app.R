@@ -1,6 +1,7 @@
 library("shiny")
+library("maps")
 
-source("my_ui.R")
-source("my_server.R")
+source("ui.R")
+source("server.R")
 
-shinyApp(ui = my_ui , server = my_server)
+shinyApp(ui = ui , server = server)
