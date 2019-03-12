@@ -16,7 +16,17 @@ happiness <- read.csv('data/2016.csv', stringsAsFactors = FALSE)
 happiness <- happiness %>% 
   mutate(Country.Code = iso.alpha(happiness$Country, n = 3))
 
+happiness$Country.Code[happiness$Country == "United States"] <- "USA"
+happiness$Country.Code[happiness$Country == "United Kingdom"] <- "GBR"
+happiness$Country.Code[happiness$Country == "Congo (Kinshasa)" | 
+                         happiness$Country == "Congo (Brazzaville)" ] <- "COD"
 
+happy_unemployed <- left_join(happiness, unemployment, by = "Country.Code")
+
+happiness_url <- a("World Happiness Report", href="https://www.kaggle.com/unsdsn/world-happiness")
+  
+unemployment_url <- a("World Bank Unemployment Data", 
+                      href="https://www.kaggle.com/uddipta/world-bank-unemployment-data-19912017")
 # ui: world map 
 intro <- tabPanel(  # lay out the passed content fluidly
   "Introduction",
@@ -71,7 +81,7 @@ contribution_page <- tabPanel(
 
 # ui: Comparison Tab
 comparison_page <- tabPanel(
-  "Comparison",
+  "Comparison: Happiness",
   titlePanel("Comparison of Contribution Factors Based on Country"),
   sidebarLayout(
     sidebarPanel(
@@ -114,11 +124,38 @@ comparison_page <- tabPanel(
     )
   )
 
+region <- tabPanel(
+  "Comparison: Unemployment",
+  titlePanel("Summary Statstics of Regional Unemployment Rates"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput(
+        inputId = "Select_Region",
+        label = "Region",
+        choices = happiness$Region,
+        selected = happiness$Region == "Western Europe"
+      )
+    ),
+    
+    mainPanel(
+      plotOutput(outputId = "boxplot"),
+      # written explanation of data
+      p("The reason why we would get a visualization for unemployment is to
+        make sure users can fully see how unemployment affects a region. Some
+        regions here are heavily affected while some are not.
+        This is why we did a boxplot for this section. It gives users the 
+        full range, median, and inter-quartile ranges for each region. Overall 
+        an easy way for users to see all the data into 1 plot.")
+      )
+  )
+    )
+
+
 # ui: Glossary
 glossary <- tabPanel(
   "Glossary",
   
-  p(strong("Data:"), "This data was sourced from Kaggle and was recorded using a Gallup World Poll in 2016. 
+  p(strong("Data:"), "The Happiness data was sourced from Kaggle and was recorded using a Gallup World Poll in 2016. 
     2,000 to 3,000 people were surveyed for each country."),
   
   p(strong("Happiness Score:"), "A country’s happiness score is based on a survey in 
@@ -134,16 +171,20 @@ glossary <- tabPanel(
   p(strong("Trust:"), "The trust the citizens have in their country with regards to their perception of government corruption"),
   
   p(strong("Dystopia Residual:"), "The dystopia residual represents an imaginary country with the world’s least happy people that is 
-    used as a benchmark to compare the country’s other scores against and normalize them.")
+    used as a benchmark to compare the country’s other scores against and normalize them."),
+  
+  tagList("Sources:", happiness_url, "and", unemployment_url, "were both from Kaggle.")
+  
 )
 
   
   
 ui <- fluidPage(
   navbarPage(
-    "Happiness and Unemployment Data",
+    "World Happiness and Unemployment",
     intro,
     contribution_page,
-    comparison_page, glossary)
+    comparison_page, region,
+    glossary)
 )
   

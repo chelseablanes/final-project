@@ -5,6 +5,8 @@ library("shiny")
 library("ggplot2")
 library("maps")
 
+happy_unemployed <- left_join(happiness, unemployment, by = "Country.Code")
+
 server <- function(input, output) {
   
   # server: world map
@@ -23,7 +25,16 @@ server <- function(input, output) {
           x = NULL,
           y = NULL,
           fill = "Unemployment Rate"
-        )
+        ) +
+        theme_bw() +
+        #eliminates background, gridlines, and chart border
+        theme(
+          plot.background = element_blank()
+          ,panel.grid.major = element_blank()
+          ,panel.grid.minor = element_blank()
+          ,panel.border = element_blank()
+        ) 
+      
       world_unemployment_map
     }
     
@@ -31,11 +42,6 @@ server <- function(input, output) {
       world_for_happiness <- world %>% 
         filter(Country.Code != "GRL") %>% 
         filter(Country.Code != "ATA")
-      
-      happiness$Country.Code[happiness$Country == "United States"] <- "USA"
-      happiness$Country.Code[happiness$Country == "United Kingdom"] <- "GBR"
-      happiness$Country.Code[happiness$Country == "Congo (Kinshasa)" | 
-                             happiness$Country == "Congo (Brazzaville)" ] <- "COD"
       
       world_happiness <- left_join(world_for_happiness, happiness, by = "Country.Code") %>% 
         select(lat, long, group, Country, Happiness.Score) 
@@ -48,7 +54,15 @@ server <- function(input, output) {
           x = NULL,
           y = NULL, 
           fill = input$category
-        )
+        ) +
+        theme_bw() +
+        #eliminates background, gridlines, and chart border
+        theme(
+          plot.background = element_blank()
+          ,panel.grid.major = element_blank()
+          ,panel.grid.minor = element_blank()
+          ,panel.border = element_blank()
+        ) 
       world_happiness_map
     }
   })
@@ -58,7 +72,6 @@ server <- function(input, output) {
   })
   
   output$scatterplot <- renderPlot ({
-    happy_unemployed <- left_join(happiness, unemployment, by = "Country.Code")
     
     ggplot(data = happy_unemployed) +
       geom_point(mapping = aes(x = X2016, y = Happiness.Score), color = "blue", size = 2, alpha = .8) +
@@ -66,7 +79,8 @@ server <- function(input, output) {
         title = "Country's Happiness Score as a Function of Unemployment Rate",
         x = "Unemployment Rate %",
         y = "Happiness Score"
-      )
+      ) +
+      theme_bw() 
     
   })
   
@@ -184,7 +198,29 @@ server <- function(input, output) {
            y = input$categoryGroup)
     compare_plot
   })
+  
+  output$boxplot <- renderPlot({
+    
+    happy_unemployed <- happy_unemployed %>% 
+      filter(Region == input$Select_Region)
+    
+    boxplot <- ggplot(data = happy_unemployed,
+                      mapping = aes(
+                        x = input$Select_Region,
+                        y = X2016)) +
+      geom_boxplot(fill = "white", color = "red") +
+      labs(
+        title = paste("Distribution of Unemployment Rates in", input$Select_Region),
+        x = "Region",
+        y = "Unemployment Rates"
+      ) +
+      coord_flip() 
+    
+    boxplot
+  })
 }
+
+
 
 
 
