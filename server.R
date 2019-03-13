@@ -206,7 +206,7 @@ server <- function(input, output) {
       theme_void() + # voids the x and y axis
       geom_text(aes(x = 1.4, y = (labPos=cumsum(Data) - (Data / 2)), 
                     label=scales::percent(label)), size = 4) + # creates percentages on chart
-      scale_fill_discrete(name = "Country Name",
+      scale_fill_discrete(name = "Category",
                           labels = c("Dystopia Residual",
                                      "Generosity",
                                      "Government Trust",

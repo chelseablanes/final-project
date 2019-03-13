@@ -148,7 +148,7 @@ comparison_page <- tabPanel(
 # unemployment tab
 region <- tabPanel(
   "Comparison: Unemployment",
-  titlePanel("Summary Statstics of Regional Unemployment Rates"),
+  titlePanel("Summary Statistics of Regional Unemployment Rates"),
   sidebarLayout(
     sidebarPanel(
       # drop down tab to choose region of interest
