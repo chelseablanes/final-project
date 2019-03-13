@@ -130,7 +130,7 @@ comparison_page <- tabPanel(
       )
     )
   )
-
+# unemployment tab
 region <- tabPanel(
   "Comparison: Unemployment",
   titlePanel("Summary Statstics of Regional Unemployment Rates"),
@@ -144,6 +144,7 @@ region <- tabPanel(
       )
     ),
     
+    # quick explaination and reasoning for boxplot and unemployment
     mainPanel(
       plotOutput(outputId = "boxplot"),
       # written explanation of data
