@@ -66,13 +66,20 @@ contribution_page <- tabPanel(
       )
     ),
     mainPanel(
-            titlePanel("Happiness Pie Chart"),
-            textOutput("score"),
-            textOutput("large"),
-            textOutput("unemployment"),
-            plotOutput("pie"),
-            p("Even as unemployment rates rise, the economy portion of the happiness chart
-              is not affected drastically.")
+      # creates title panel for tab
+      titlePanel("Happiness Pie Chart"),
+      # produces text output
+      textOutput("score"),
+      # produces text output
+      textOutput("large"),
+      # produces text output
+      textOutput("unemployment"),
+      # creates pie chart
+      plotOutput("pie"),
+      # prints findings from data gathered
+      p("Even as unemployment rates rise and fall, the economy portion of the happiness chart
+        is not affected drastically. Therefore, unemployment rates do not have huge
+        effects on the economy rating of each country's happiness score.")
     )
   )
 )

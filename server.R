@@ -10,6 +10,11 @@ happy_unemployed <- left_join(happiness, unemployment, by = "Country.Code")
 server <- function(input, output) {
   
   # server: world map
+  world <- map_data("world")
+  
+  world <-  world %>% 
+    mutate(Country.Code = iso.alpha(world$region, n = 3))
+  
   output$plot <- renderPlot({
     if(input$category == "Unemployment Rate") {
       world_unemployment <- left_join(world, unemployment, by = "Country.Code") %>% 
@@ -96,22 +101,30 @@ server <- function(input, output) {
   })
   
   # server: contribution tab
+  
+  # creates happiness data frame without certain columns
   happiness_data <- happiness %>%
     select(-contains("Happiness.Rank"),
            -contains("Lower.Confidence.Interval"),
            -contains("Upper.Confidence.Interval"),
            -contains("Region"))
   
+  # creates unemployment data frame
   unemployment_data <- unemployment
+  # changes col name to "country"
   colnames(unemployment_data)[1] <- "Country"
+  # only selects certain columns in the unemployment df
   unemployment_data <- unemployment_data %>%
     select(contains("Country"), contains("X2016"), -contains("Country.Code"))
   
+  # joins happiness and unemployment data frame
   happiness_data <- left_join(happiness_data, unemployment_data, by = "Country")
-  
+
+  # changes column names
   colnames(happiness_data)[3:9] <- c("Economy", "Family", "Life_Expectancy", "Freedom",
                                      "Government_Trust", "Generosity", "Dystopia_Residual")
   
+  # adjusts data frame and renders it so that it is able to create a pie chart
   gathered_happiness_data <- gather(happiness_data, "Category", "Data", 3:9) %>%
     mutate(Category = factor(Category, levels = c("Dystopia_Residual", "Generosity", "Government_Trust", "Freedom",
                                                   "Life_Expectancy", "Family", "Economy")),
@@ -119,12 +132,15 @@ server <- function(input, output) {
            midpoint = cumulative - Happiness.Score / 2,
            label = paste0(Category, " ", round((Data / Happiness.Score) * 100, digits = 2), "%"))
   
+  # creates new column with percentages
   gathered_happiness_data$label <- round((gathered_happiness_data$Data / gathered_happiness_data$Happiness.Score), digits = 3)
+  
+  # adjusts df from input by user
   happiness_reactive <- reactive ({
     filter(gathered_happiness_data, Country %in% capitalize(input$text))
   })
   
-  
+  # renders text for that country's happiness score
   output$score <- renderText({
     if (nrow(happiness_reactive()) == 0) {
       print("")
@@ -133,6 +149,7 @@ server <- function(input, output) {
     }
   })
   
+  # renders input for what category had the largest impact on the score
   output$large <- renderText({
     if (nrow(happiness_reactive()) == 0) {
       print("")
@@ -147,10 +164,11 @@ server <- function(input, output) {
       } else if (final == "Government_Trust"){
         final <- "Government Trust"
       }
-      paste("Largest Impact on this score is", final, "scored at", num, "points.")
+      paste("Largest impact on this score is", final, "scored at", num, "points.")
     }
   })
   
+  # renders feedback for country's unemployment rate
   output$unemployment <- renderText({
     if (nrow(happiness_reactive()) == 0) {
       print("")
@@ -160,12 +178,15 @@ server <- function(input, output) {
     
   })
   
+  # renders pie chart
   output$pie <- renderPlot({
     ggplot(happiness_reactive()) +
-      geom_bar(mapping = aes(x = "", y = Data, fill = Category), width = 1, stat = "identity") +
-      coord_polar(theta = "y") +
-      theme_void() +
-      geom_text(aes(x = 1.4, y = (labPos=cumsum(Data) - (Data / 2)), label=scales::percent(label)), size = 4) +
+      geom_bar(mapping = aes(x = "", y = Data, fill = Category), width = 1, 
+               stat = "identity") + # creates bar chart
+      coord_polar(theta = "y") + # creates pie chart
+      theme_void() + # voids the x and y axis
+      geom_text(aes(x = 1.4, y = (labPos=cumsum(Data) - (Data / 2)), 
+                    label=scales::percent(label)), size = 4) + # creates percentages on chart
       scale_fill_discrete(name = "Country Name",
                           labels = c("Dystopia Residual",
                                      "Generosity",
@@ -173,7 +194,7 @@ server <- function(input, output) {
                                      "Freedom",
                                      "Life Expectancy",
                                      "Family",
-                                     "Economy"))
+                                     "Economy")) # changes legend names
   })
   
   
