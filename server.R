@@ -5,6 +5,7 @@ library("shiny")
 library("ggplot2")
 library("maps")
 
+# combine 2 data frames that will be used in multiple render functions
 happy_unemployed <- left_join(happiness, unemployment, by = "Country.Code")
 
 server <- function(input, output) {
@@ -12,16 +13,23 @@ server <- function(input, output) {
   # server: world map
   world <- map_data("world")
   
+  # mutate world map data to have 3 letter country code
   world <-  world %>% 
     mutate(Country.Code = iso.alpha(world$region, n = 3))
   
+  # use of if/else statement: user gets optins of seeing either happiness
+  # or unemployment map visualization
   output$plot <- renderPlot({
+    # scenario is user chooses to see unemployment rate
     if(input$category == "Unemployment Rate") {
+      # combined map data and unemployment data
       world_unemployment <- left_join(world, unemployment, by = "Country.Code") %>% 
         select(Country.Code, lat, long, group, X2016)
       
+      # remove NA values since world map data has more countries than unemployment
       world_unemployment <- world_unemployment[!is.na(world_unemployment$X2016), ]
       
+      # create map visualization for world unemployment 
       world_unemployment_map <- ggplot(data = world_unemployment) +
         geom_polygon(aes(x = long, y = lat, group = group, fill = X2016)) +
         coord_quickmap() +
@@ -40,17 +48,22 @@ server <- function(input, output) {
           ,panel.border = element_blank()
         ) 
       
+      # return
       world_unemployment_map
     }
     
+    # scenario if user chooses to see Happiness score
     else if(input$category == "Happiness Score") {
+      # remove values for Antarctica and Greenland (parts of the world with no data)
       world_for_happiness <- world %>% 
         filter(Country.Code != "GRL") %>% 
         filter(Country.Code != "ATA")
       
+      # combine world map data and happiness data 
       world_happiness <- left_join(world_for_happiness, happiness, by = "Country.Code") %>% 
         select(lat, long, group, Country, Happiness.Score) 
       
+      # visualization for World Happiness Score
       world_happiness_map <- ggplot(data = world_happiness) +
         geom_polygon(aes(x = long, y = lat, group = group, fill = Happiness.Score)) +
         coord_quickmap() +
@@ -72,12 +85,16 @@ server <- function(input, output) {
     }
   })
   
+  # reactive title for Map 
   output$map_title <- renderText({
+    # title changes depending on what the user chooses to look at
     paste("World Map Showing", input$category, "by Country")
   })
   
+  # scatterplot that looks at the association of unemployment rate and happiness
   output$scatterplot <- renderPlot ({
     
+    # plots combined happiness and unemployment data frame 
     ggplot(data = happy_unemployed) +
       geom_point(mapping = aes(x = X2016, y = Happiness.Score), color = "blue", size = 2, alpha = .8) +
       labs(
@@ -89,10 +106,12 @@ server <- function(input, output) {
     
   })
   
+  # reactive description of the map depending on user choice
   output$map_description <- renderText({
     paste("The map shows the", input$category, "across the world.")
   })
   
+  # description of scatterplot
   output$scatterplot_description <- renderText({
     paste("The scatterplot shows that there is a loose negative association (happiness 
           decreases when unemployment rates increase) between 
@@ -222,9 +241,12 @@ server <- function(input, output) {
   
   output$boxplot <- renderPlot({
     
+    # uses combined happiness and unemployment data frame
     happy_unemployed <- happy_unemployed %>% 
+      # filters region the user selected
       filter(Region == input$Select_Region)
     
+    # boxplot visualization of the specific region
     boxplot <- ggplot(data = happy_unemployed,
                       mapping = aes(
                         x = input$Select_Region,
@@ -235,6 +257,7 @@ server <- function(input, output) {
         x = "Region",
         y = "Unemployment Rates"
       ) +
+      # flip coordinates to desired orientation
       coord_flip() 
     
     boxplot

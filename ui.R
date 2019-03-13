@@ -9,22 +9,28 @@ library("Hmisc")
 unemployment <- read.csv('data/API_SL.UEM.TOTL.ZS_DS2_en_csv_v2_10473697.csv', 
                          stringsAsFactors = FALSE)
 
+# select only pertinent columns
 unemployment <- unemployment %>% 
   select(Country.Name, Country.Code, X2016)
 
+# load happiness csv
 happiness <- read.csv('data/2016.csv', stringsAsFactors = FALSE)
+# mutate happiness data frame to have 3 letter country code for combining
 happiness <- happiness %>% 
   mutate(Country.Code = iso.alpha(happiness$Country, n = 3))
 
+# countries that did not have matches for iso.alpha 3 letter country codes
+# manually change these values to avoid NAs for these countries
 happiness$Country.Code[happiness$Country == "United States"] <- "USA"
 happiness$Country.Code[happiness$Country == "United Kingdom"] <- "GBR"
 happiness$Country.Code[happiness$Country == "Congo (Kinshasa)" | 
                          happiness$Country == "Congo (Brazzaville)" ] <- "COD"
 
+# combined happiness and unemployment data frames
 happy_unemployed <- left_join(happiness, unemployment, by = "Country.Code")
 
+# url for our data sources
 happiness_url <- a("World Happiness Report", href="https://www.kaggle.com/unsdsn/world-happiness")
-  
 unemployment_url <- a("World Bank Unemployment Data", 
                       href="https://www.kaggle.com/uddipta/world-bank-unemployment-data-19912017")
 # ui: world map 
@@ -32,7 +38,7 @@ intro <- tabPanel(  # lay out the passed content fluidly
   "Introduction",
   sidebarLayout(  # lay out the passed content into two columns
     sidebarPanel( # lay out the passed content inside the "sidebar" column
-      # shows choices of which country's data they can see
+      # shows choices of which data they can see
       radioButtons(inputId = "category", label = "Which Value?", 
                    choices = c("Happiness Score", "Unemployment Rate"), 
                    selected = "Happiness Score")
@@ -40,10 +46,15 @@ intro <- tabPanel(  # lay out the passed content fluidly
     
     mainPanel(    # lay out the passed content inside the "main" column
       # generates the plot output made in the server
+      # heading for the Map using rendered text from server
       h3(textOutput(outputId = "map_title")),
+      # returns map of either happiness or unemployment
       plotOutput(outputId = "plot"),
+      # returns scatterplot
       plotOutput(outputId = "scatterplot"),
+      # description of map
       textOutput(outputId = "map_description"),
+      # description of scatterplot
       textOutput(outputId = "scatterplot_description")
   
     )
@@ -92,18 +103,21 @@ comparison_page <- tabPanel(
   titlePanel("Comparison of Contribution Factors Based on Country"),
   sidebarLayout(
     sidebarPanel(
+      # drop down tab for first country option
       selectInput(
         inputId = "country1",
         label = "Select a first country of interest:",
         choices = as.vector(unique(happiness$Country)),
         selected = "United States"
       ),
+      # drop down tab for second country option
       selectInput(
         inputId = "country2",
         label = "Select a second country of interest:",
         choices = as.vector(unique(happiness$Country)),
         selected = "Canada"
       ),
+      # lets user choose which value to see in the bar chart
       radioButtons(
         inputId = "categoryGroup",
         label = "Select a category of interest",
@@ -130,12 +144,14 @@ comparison_page <- tabPanel(
       )
     )
   )
+
 # unemployment tab
 region <- tabPanel(
   "Comparison: Unemployment",
   titlePanel("Summary Statstics of Regional Unemployment Rates"),
   sidebarLayout(
     sidebarPanel(
+      # drop down tab to choose region of interest
       selectInput(
         inputId = "Select_Region",
         label = "Region",
@@ -160,6 +176,7 @@ region <- tabPanel(
 
 
 # ui: Glossary
+# shows definitions and sources of both data frames
 glossary <- tabPanel(
   "Glossary",
   
@@ -181,18 +198,25 @@ glossary <- tabPanel(
   p(strong("Dystopia Residual:"), "The dystopia residual represents an imaginary country with the world’s least happy people that is 
     used as a benchmark to compare the country’s other scores against and normalize them."),
   
+  # hyperlink of sources
   tagList("Sources:", happiness_url, "and", unemployment_url, "were both from Kaggle.")
   
 )
 
   
-  
+# compelted UI
 ui <- fluidPage(
   navbarPage(
     "World Happiness and Unemployment",
+    # map and scatterplot
     intro,
+    # contributors of happiness per country
     contribution_page,
-    comparison_page, region,
+    # compares happiness/contributor of happiness of one country to another
+    comparison_page, 
+    # summary statistics of unemployment rates per region
+    region,
+    # glossary definitions
     glossary)
 )
   
